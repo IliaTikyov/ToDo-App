@@ -1,15 +1,23 @@
 import { useState } from "react";
+import { FaTrashCan } from "react-icons/fa6";
+import { MdEdit } from "react-icons/md";
+import { GiCancel } from "react-icons/gi";
 
 const AddingTasks = () => {
   const [addTask, setAddTask] = useState("");
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editingText, setEditingText] = useState("");
 
   const handleAddTask = (e) => {
     e.preventDefault();
 
     if (addTask.trim().length > 0) {
-      setTasks((prevTasks) => [...prevTasks, addTask]);
+      setTasks((prevTasks) => [
+        ...prevTasks,
+        { id: Date.now(), text: addTask },
+      ]);
       setAddTask("");
       setError(false);
     } else {
@@ -17,9 +25,39 @@ const AddingTasks = () => {
     }
   };
 
+  const handleDeleteTask = (id) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+
+    const confirmDelete = confirm(`Delete "${task.text}"?`);
+    if (confirmDelete) {
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    }
+  };
+
+  const handleModify = (task) => {
+    setEditingTaskId(task.id);
+    setEditingText(task.text);
+  };
+
+  const handleSaveEdit = (button) => {
+    if (button === "save") {
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === editingTaskId ? { ...t, text: editingText } : t
+        )
+      );
+      setEditingTaskId(null);
+      setEditingText("");
+    } else if (button === "cancel") {
+      setEditingTaskId(null);
+      setEditingText("");
+    }
+  };
+
   return (
     <>
-      <div className="p-2 rounded-2xl bg-white max-w-md w-full mx-auto">
+      <div className="p-2 rounded-2xl bg-white max-w-md w-full mx-auto shadow-lg">
         <form onSubmit={handleAddTask}>
           <div className="flex gap-2">
             <input
@@ -44,13 +82,50 @@ const AddingTasks = () => {
         )}
       </div>
 
-      <div className="py-2.5">
-        {tasks.map((task, index) => (
-          <>
-            <div className="bg-amber-200 px-5" key={index}>
-              {task}
-            </div>
-          </>
+      <div className="py-2.5 mt-3.5 flex flex-wrap">
+        {tasks.map((task) => (
+          <div
+            key={task.id}
+            className="bg-amber-200 hover:bg-amber-300 px-15 py-4 mb-3 mx-2 basis-1/5 text-center justify-center items-center flex "
+          >
+            {editingTaskId === task.id ? (
+              <>
+                <input
+                  value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                />
+                <button
+                  onClick={() => handleSaveEdit("save")}
+                  className="bg-blue-400 hover:bg-blue-500 cursor-pointer rounded-3xl px-3 py-3 ml-2"
+                >
+                  <MdEdit />
+                </button>
+                <button
+                  onClick={() => handleSaveEdit("cancel")}
+                  className="bg-gray-400 hover:bg-gray-500 cursor-pointer rounded-3xl px-3 py-3 ml-2"
+                >
+                  <GiCancel />
+                </button>
+              </>
+            ) : (
+              <>
+                {task.text}
+                <button
+                  className="bg-red-400 hover:bg-red-500 cursor-pointer rounded-3xl px-3 py-3 ml-2"
+                  type="button"
+                  onClick={() => handleDeleteTask(task.id)}
+                >
+                  <FaTrashCan />
+                </button>
+                <button
+                  onClick={() => handleModify(task)}
+                  className="bg-orange-400 hover:bg-orange-500 cursor-pointer rounded-3xl px-3 py-3 ml-2"
+                >
+                  <MdEdit />
+                </button>
+              </>
+            )}
+          </div>
         ))}
       </div>
     </>
