@@ -1,14 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaTrashCan } from "react-icons/fa6";
 import { MdEdit } from "react-icons/md";
 import { GiCancel } from "react-icons/gi";
 
 const AddingTasks = () => {
   const [addTask, setAddTask] = useState("");
-  const [tasks, setTasks] = useState([]);
   const [error, setError] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingText, setEditingText] = useState("");
+
+  const [tasks, setTasks] = useState(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const createdTasks = localStorage.getItem("tasks");
+      return createdTasks ? JSON.parse(createdTasks) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
 
   const handleAddTask = (e) => {
     e.preventDefault();
