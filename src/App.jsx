@@ -1,12 +1,15 @@
 import Header from "./components/Header";
-import "./App.css";
 import AddingTasks from "./components/AddingTasks";
+import ThemeToggle from "./components/ThemeToggle";
 
 function App() {
   return (
-    <div className="flex flex-col items-center justify-center mt-6">
-      <Header />
-      <AddingTasks />
+    <div className="min-h-screen w-full bg-[#ecedef] dark:bg-gray-900">
+      <div className="flex flex-col items-center justify-center pt-6">
+        <ThemeToggle className="" />
+        <Header />
+        <AddingTasks />
+      </div>
     </div>
   );
 }
