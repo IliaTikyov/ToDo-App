@@ -23,7 +23,7 @@ const ThemeToggle = ({ className }) => {
   return (
     <div
       className={
-        "bg-yellow-50 dark:bg-zinc-800 p-2 flex gap-6 border rounded-full text-2xl " +
+        "bg-grey-50 dark:bg-zinc-800 p-1 flex gap-3 border rounded-full text-2xl shadow-lg" +
         className
       }
       aria-label="Theme toggle"
