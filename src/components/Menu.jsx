@@ -1,9 +1,22 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LuMenu, LuX } from "react-icons/lu";
+import { auth } from "../../config/firebase";
+import { signOut } from "firebase/auth";
 
 const Menu = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate("");
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      console.log("You were sign out");
+      navigate("/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   return (
     <nav>
@@ -12,9 +25,9 @@ const Menu = () => {
         className="grid place-content-center p-2 cursor-pointer z-50 relative"
       >
         {isOpen ? (
-          <LuX className="w-8 h-8 text-gray-500 hover:bg-gray-800" />
+          <LuX className="w-8 h-8 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" />
         ) : (
-          <LuMenu className="w-8 h-8 text-gray-500 hover:bg-gray-700" />
+          <LuMenu className="w-8 h-8 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" />
         )}
       </div>
 
@@ -35,7 +48,10 @@ const Menu = () => {
             </Link>
           </div>
           <button className="fixed bottom-8 left-15 bg-red-400 px-8 py-2 rounded-full text-white shadow-lg hover:bg-red-500">
-            <Link to="/login"> Sign Out </Link>
+            <Link to="/login" onClick={handleSignOut}>
+              {" "}
+              Sign Out{" "}
+            </Link>
           </button>
         </div>
       )}
