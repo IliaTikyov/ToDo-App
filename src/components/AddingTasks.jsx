@@ -2,13 +2,24 @@ import { useEffect, useState } from "react";
 import { FaTrashCan } from "react-icons/fa6";
 import { MdEdit } from "react-icons/md";
 import { GiCancel } from "react-icons/gi";
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+} from "firebase/firestore";
+import { auth, db } from "../../config/firebase";
 
 const AddingTasks = () => {
   const [addTask, setAddTask] = useState("");
   const [error, setError] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingText, setEditingText] = useState("");
-
   const [tasks, setTasks] = useState(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -24,28 +35,59 @@ const AddingTasks = () => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
-  const handleAddTask = (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
 
-    if (addTask.trim().length > 0) {
-      setTasks((prevTasks) => [
-        ...prevTasks,
-        { id: Date.now(), text: addTask },
-      ]);
-      setAddTask("");
-      setError(false);
-    } else {
+    const tasksCol = collection(db, "users", user.uid, "tasks");
+
+    const unsub = onSnapshot(q, (snap) => {
+      const next = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setTasks(next);
+    });
+
+    return () => unsub();
+  }, []);
+
+  const handleAddTask = async (e) => {
+    e.preventDefault();
+    const text = addTask.trim();
+    if (!text) {
       setError(true);
+      return;
+    }
+    setError(false);
+
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const tasksCol = collection(db, "users", user.uid, "tasks");
+      await addDoc(tasksCol, {
+        text,
+        completed: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      setAddTask("");
+    } catch (err) {
+      console.error("Failed to add task:", err);
     }
   };
 
-  const handleDeleteTask = (id) => {
+  const handleDeleteTask = async (id) => {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
 
-    const confirmDelete = confirm(`Delete "${task.text}"?`);
-    if (confirmDelete) {
-      setTasks((prev) => prev.filter((t) => t.id !== id));
+    if (!confirm(`Delete "${task.text}"?`)) return;
+
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "tasks", id));
+    } catch (err) {
+      console.error("Failed to delete task:", err);
     }
   };
 
@@ -54,21 +96,28 @@ const AddingTasks = () => {
     setEditingText(task.text);
   };
 
-  const handleSaveEdit = (button) => {
-    if (button === "save") {
-      if (editingText.trim().length === 0) {
-        alert("Task can not be empty field! Please add a task!");
+  const handleSaveEdit = async (action) => {
+    if (action === "save") {
+      const text = editingText.trim();
+      if (!text) {
+        console.error("Tasks can not be empty field");
         return;
       }
 
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === editingTaskId ? { ...t, text: editingText } : t
-        )
-      );
-      setEditingTaskId(null);
-      setEditingText("");
-    } else if (button === "cancel") {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        await updateDoc(doc(db, "users", user.uid, "tasks", editingTaskId), {
+          text,
+          updatedAt: serverTimestamp(),
+        });
+        setEditingTaskId(null);
+        setEditingText("");
+      } catch (err) {
+        console.error("Failed to update task:", err);
+      }
+    } else if (action === "cancel") {
       setEditingTaskId(null);
       setEditingText("");
     }
@@ -83,7 +132,7 @@ const AddingTasks = () => {
               className="flex-1 p-2 rounded-md bg-gray-100 hover:bg-gray-200"
               placeholder="Enter A Task"
               value={addTask}
-              onChange={(event) => setAddTask(event.target.value)}
+              onChange={(e) => setAddTask(e.target.value)}
             />
             <button
               type="submit"
@@ -104,20 +153,11 @@ const AddingTasks = () => {
       {tasks.length === 0 ? (
         <p className="mt-5 text-gray-400">You have no tasks. Create some 😊</p>
       ) : (
-        <div
-          className="
-    py-2.5 mt-3.5 flex flex-wrap justify-center gap-4
-    border-2 border-white rounded-sm overflow-y-scroll max-h-96
-    w-full max-w-4xl shadow-md
-  "
-        >
+        <div className="py-2.5 mt-3.5 flex flex-wrap justify-center gap-4 border-2 border-white rounded-sm overflow-y-scroll max-h-96 w-full max-w-4xl shadow-md">
           {tasks.map((task) => (
             <div
               key={task.id}
-              className="
-  bg-amber-100 hover:bg-amber-200 rounded-xl shadow-md 
-  px-4 py-3 mb-3 mx-2 text-left flex flex-col justify-between basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4
-"
+              className="bg-amber-100 hover:bg-amber-200 rounded-xl shadow-md px-4 py-3 mb-3 mx-2 text-left flex flex-col justify-between basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
             >
               {editingTaskId === task.id ? (
                 <div className="flex justify-between items-center w-full">
@@ -130,8 +170,7 @@ const AddingTasks = () => {
                     autoFocus
                     aria-label="Edit task text"
                     className="bg-amber-400 hover:bg-amber-500 rounded-2xl px-2.5 py-1 w-full"
-                  ></textarea>
-
+                  />
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleSaveEdit("save")}
