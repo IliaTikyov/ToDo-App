@@ -1,7 +1,4 @@
 import { useEffect, useState } from "react";
-import { FaTrashCan } from "react-icons/fa6";
-import { MdEdit } from "react-icons/md";
-import { GiCancel } from "react-icons/gi";
 import {
   collection,
   doc,
@@ -12,43 +9,87 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { auth, db } from "../../config/firebase";
+
+import {
+  DndContext,
+  closestCorners,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  rectSortingStrategy,
+  SortableContext,
+} from "@dnd-kit/sortable";
+import { TaskCard } from "./TaskCard";
 
 const AddingTasks = () => {
   const [addTask, setAddTask] = useState("");
   const [error, setError] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingText, setEditingText] = useState("");
-  const [tasks, setTasks] = useState(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const createdTasks = localStorage.getItem("tasks");
-      return createdTasks ? JSON.parse(createdTasks) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [tasks, setTasks] = useState([]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
 
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
 
     const tasksCol = collection(db, "users", user.uid, "tasks");
-    const q = query(tasksCol, orderBy("createdAt", "desc"));
+    const q = query(tasksCol, orderBy("position", "asc"));
 
     const unsub = onSnapshot(q, (snap) => {
-      const next = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const next = snap.docs.map((d, idx) => {
+        const data = d.data() || {};
+        return {
+          id: d.id,
+          text: data.text || "",
+          position: typeof data.position === "number" ? data.position : idx,
+        };
+      });
       setTasks(next);
     });
 
     return () => unsub();
   }, []);
+
+  const getIndex = (id) => tasks.findIndex((t) => t.id === id);
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const from = getIndex(active.id);
+    const to = getIndex(over.id);
+    if (from === -1 || to === -1) return;
+
+    const reordered = arrayMove(tasks, from, to);
+    setTasks(reordered);
+
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const batch = writeBatch(db);
+      reordered.forEach((t, idx) => {
+        batch.update(doc(db, "users", user.uid, "tasks", t.id), {
+          position: idx,
+          updatedAt: serverTimestamp(),
+        });
+      });
+      await batch.commit();
+    } catch (err) {
+      console.error("Failed to persist order:", err);
+    }
+  };
 
   const handleAddTask = async (e) => {
     e.preventDefault();
@@ -64,9 +105,11 @@ const AddingTasks = () => {
 
     try {
       const tasksCol = collection(db, "users", user.uid, "tasks");
+      const nextPos = tasks.length;
       await addDoc(tasksCol, {
         text,
         completed: false,
+        position: nextPos,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -87,41 +130,53 @@ const AddingTasks = () => {
 
     try {
       await deleteDoc(doc(db, "users", user.uid, "tasks", id));
+
+      const remaining = tasks.filter((t) => t.id !== id);
+      setTasks(remaining);
+
+      const batch = writeBatch(db);
+      remaining.forEach((t, idx) => {
+        batch.update(doc(db, "users", user.uid, "tasks", t.id), {
+          position: idx,
+          updatedAt: serverTimestamp(),
+        });
+      });
+      await batch.commit();
     } catch (err) {
       console.error("Failed to delete task:", err);
     }
   };
 
-  const handleModify = (task) => {
+  const handleStartEdit = (task) => {
     setEditingTaskId(task.id);
     setEditingText(task.text);
   };
 
-  const handleSaveEdit = async (action) => {
-    if (action === "save") {
-      const text = editingText.trim();
-      if (!text) {
-        alert("Task can not be empty field! Please add a task!");
-        return;
-      }
+  const handleSaveEdit = async () => {
+    const text = editingText.trim();
+    if (!text) {
+      alert("Task can not be empty field! Please add a task!");
+      return;
+    }
 
-      const user = auth.currentUser;
-      if (!user) return;
+    const user = auth.currentUser;
+    if (!user || !editingTaskId) return;
 
-      try {
-        await updateDoc(doc(db, "users", user.uid, "tasks", editingTaskId), {
-          text,
-          updatedAt: serverTimestamp(),
-        });
-        setEditingTaskId(null);
-        setEditingText("");
-      } catch (err) {
-        console.error("Failed to update task:", err);
-      }
-    } else if (action === "cancel") {
+    try {
+      await updateDoc(doc(db, "users", user.uid, "tasks", editingTaskId), {
+        text,
+        updatedAt: serverTimestamp(),
+      });
       setEditingTaskId(null);
       setEditingText("");
+    } catch (err) {
+      console.error("Failed to update task:", err);
     }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTaskId(null);
+    setEditingText("");
   };
 
   return (
@@ -155,60 +210,30 @@ const AddingTasks = () => {
         <p className="mt-5 text-gray-400">You have no tasks. Create some 😊</p>
       ) : (
         <div className="py-2.5 mt-3.5 flex flex-wrap justify-center gap-4 border-2 border-white rounded-sm overflow-y-scroll max-h-96 w-full max-w-4xl shadow-md">
-          {tasks.map((task) => (
-            <div
-              key={task.id}
-              className="bg-amber-100 hover:bg-amber-200 rounded-xl shadow-md px-4 py-3 mb-3 mx-2 text-left flex flex-col justify-between basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={tasks.map((t) => t.id)}
+              strategy={rectSortingStrategy}
             >
-              {editingTaskId === task.id ? (
-                <div className="flex justify-between items-center w-full">
-                  <textarea
-                    value={editingText}
-                    onChange={(e) => setEditingText(e.target.value)}
-                    rows={2}
-                    placeholder="Edit your task…"
-                    spellCheck={true}
-                    autoFocus
-                    aria-label="Edit task text"
-                    className="bg-amber-400 hover:bg-amber-500 rounded-2xl px-2.5 py-1 w-full"
-                  />
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => handleSaveEdit("save")}
-                      className="bg-blue-400 hover:bg-blue-500 cursor-pointer rounded-3xl p-2.5 ml-2"
-                    >
-                      <MdEdit className="size-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleSaveEdit("cancel")}
-                      className="bg-gray-400 hover:bg-gray-500 cursor-pointer rounded-3xl p-2.5 "
-                    >
-                      <GiCancel className="size-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-between items-center w-full">
-                  <span>{task.text}</span>
-                  <div className="flex gap-0">
-                    <button
-                      className="bg-red-400 hover:bg-red-500 cursor-pointer rounded-3xl p-2.5"
-                      type="button"
-                      onClick={() => handleDeleteTask(task.id)}
-                    >
-                      <FaTrashCan className="size-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleModify(task)}
-                      className="bg-orange-400 hover:bg-orange-500 cursor-pointer rounded-3xl p-2.5 ml-1"
-                    >
-                      <MdEdit className="size-3.5" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+              {tasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  isEditing={editingTaskId === task.id}
+                  editingText={editingTaskId === task.id ? editingText : ""}
+                  onChangeEditingText={setEditingText}
+                  onStartEdit={handleStartEdit}
+                  onSaveEdit={handleSaveEdit}
+                  onCancelEdit={handleCancelEdit}
+                  onDelete={handleDeleteTask}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
       )}
     </>
