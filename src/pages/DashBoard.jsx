@@ -1,8 +1,8 @@
 import React from "react";
-import ThemeToggle from "./ThemeToggle";
-import Menu from "./Menu";
-import Header from "./Header";
-import AddingTasks from "./AddingTasks";
+import ThemeToggle from "../components/ThemeToggle";
+import Menu from "../components/Menu";
+import Header from "../components/Header";
+import AddingTasks from "../components/AddingTasks";
 
 const DashBoard = () => {
   return (
