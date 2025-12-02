@@ -1,10 +1,11 @@
 import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import DashBoard from "./components/DashBoard";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import Account from "./components/Account";
+import DashBoard from "./pages/DashBoard";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import { ProtectedRoute } from "./utils/ProtectedRoute";
+import Account from "./pages/Account";
+import UpdatePassword from "./pages/UpdatePassword";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/updatePassword" element={<UpdatePassword />} />
         </Routes>
       </BrowserRouter>
     </React.StrictMode>
