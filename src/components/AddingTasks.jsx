@@ -178,38 +178,52 @@ const AddingTasks = () => {
     setEditingTaskId(null);
     setEditingText("");
   };
-
   return (
     <>
-      <div className="p-2 rounded-2xl bg-white max-w-md w-full mx-auto shadow-lg">
+      {/* Add Task Card */}
+      <div className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 max-w-md w-full mx-auto shadow-lg">
         <form onSubmit={handleAddTask}>
           <div className="flex gap-2">
             <input
-              className="flex-1 p-2 rounded-md bg-gray-100 hover:bg-gray-200"
-              placeholder="Enter A Task"
+              className="flex-1 px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 
+                       text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
+                       focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Enter a task"
               value={addTask}
               onChange={(e) => setAddTask(e.target.value)}
             />
             <button
               type="submit"
-              className="bg-green-300 rounded-3xl px-3 py-2 text-white font-bold hover:bg-green-400 cursor-pointer"
+              className="rounded-3xl px-4 py-2 font-semibold text-sm
+                       bg-indigo-600 hover:bg-indigo-700 
+                       text-white shadow-sm cursor-pointer
+                       transition-colors"
             >
-              +Add
+              + Add
             </button>
           </div>
         </form>
 
         {error && (
-          <p className="text-red-500 font-black flex justify-center mt-3">
+          <p className="text-red-500 dark:text-red-400 font-semibold flex justify-center mt-3 text-sm">
             Task should have at least 1 character!
           </p>
         )}
       </div>
 
+      {/* Task List */}
       {tasks.length === 0 ? (
-        <p className="mt-5 text-gray-400">You have no tasks. Create some 😊</p>
+        <p className="mt-5 text-gray-400 dark:text-gray-500 text-sm">
+          You have no tasks. Create some 😊
+        </p>
       ) : (
-        <div className="py-2.5 mt-3.5 flex flex-wrap justify-center gap-4 border-2 border-white rounded-sm overflow-y-scroll max-h-96 w-full max-w-4xl shadow-md">
+        <div
+          className="py-3 mt-4 flex flex-wrap justify-center gap-4 
+                      bg-white dark:bg-gray-800 
+                      border border-gray-200 dark:border-gray-700 
+                      rounded-2xl overflow-y-auto max-h-96 
+                      w-full max-w-4xl mx-auto shadow-md"
+        >
           <DndContext
             sensors={sensors}
             collisionDetection={closestCorners}
