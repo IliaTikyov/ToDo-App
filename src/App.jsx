@@ -4,6 +4,7 @@ import DashBoard from "./components/DashBoard";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import Account from "./components/Account";
 
 function App() {
   return (
@@ -15,6 +16,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashBoard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <Account />
               </ProtectedRoute>
             }
           />

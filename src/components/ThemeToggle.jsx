@@ -2,34 +2,46 @@ import { useEffect, useState } from "react";
 import { LuSun, LuMoon } from "react-icons/lu";
 
 const ThemeToggle = ({ className }) => {
-  const [isDark, setIsDark] = useState(() => {
-    const stored = localStorage.getItem("theme");
-    if (stored === "dark") return true;
-    if (stored === "light") return false;
-    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
-  });
+  const [isDark, setIsDark] = useState(
+    localStorage.getItem("theme") || "light"
+  );
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDark);
-    localStorage.setItem("theme", isDark ? "dark" : "light");
+    if (isDark === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", isDark);
   }, [isDark]);
 
+  const toggleTheme = () => {
+    setIsDark(isDark === "dark" ? "light" : "dark");
+  };
+
   const baseBtn =
-    "p-2 rounded-full transition outline-none focus:ring focus:ring-offset-2 dark:focus:ring-offset-zinc-800";
-  const activeLight = "bg-white text-yellow-500 shadow dark:bg-zinc-700";
-  const activeDark = "bg-gray-800 text-blue-400 shadow dark:bg-zinc-600";
-  const inactive = "hover:bg-gray-200 dark:hover:bg-zinc-700";
+    "p-2 rounded-full transition-colors outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400";
+
+  const activeLight =
+    "bg-white text-yellow-500 shadow border border-gray-200 dark:border-gray-600";
+
+  const activeDark =
+    "bg-gray-800 text-indigo-400 shadow border border-gray-700 dark:bg-gray-700";
+
+  const inactive =
+    "text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700";
 
   return (
     <div
       className={
-        "bg-grey-50 dark:bg-zinc-800 p-1 flex gap-3 border rounded-full text-2xl shadow-lg" +
+        "bg-white dark:bg-gray-900 p-1 flex gap-2 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg text-xl " +
         className
       }
       aria-label="Theme toggle"
     >
+      {/* Light button */}
       <button
-        onClick={() => setIsDark(false)}
+        onClick={toggleTheme}
         aria-label="Light theme"
         aria-pressed={!isDark}
         className={`${baseBtn} ${!isDark ? activeLight : inactive}`}
@@ -38,8 +50,9 @@ const ThemeToggle = ({ className }) => {
         <LuSun />
       </button>
 
+      {/* Dark button */}
       <button
-        onClick={() => setIsDark(true)}
+        onClick={toggleTheme}
         aria-label="Dark theme"
         aria-pressed={isDark}
         className={`${baseBtn} ${isDark ? activeDark : inactive}`}

@@ -32,10 +32,12 @@ export const TaskCard = ({
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-amber-100 hover:bg-amber-200 rounded-xl shadow-md px-4 py-3 mb-3 mx-2 text-left flex flex-col justify-between basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
+               rounded-xl shadow-md px-4 py-3 mb-3 mx-2 text-left flex flex-col justify-between 
+               basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 transition-colors"
     >
       {isEditing ? (
-        <div className="flex justify-between items-center w-full">
+        <div className="flex justify-between items-start w-full gap-2">
           <textarea
             value={editingText}
             onChange={(e) => onChangeEditingText(e.target.value)}
@@ -44,39 +46,48 @@ export const TaskCard = ({
             spellCheck={true}
             autoFocus
             aria-label="Edit task text"
-            className="bg-amber-400 hover:bg-amber-500 rounded-2xl px-2.5 py-1 w-full"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 
+                     bg-gray-50 dark:bg-gray-700 px-2.5 py-1.5 text-sm
+                     text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
+                     focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
           />
           <div className="flex gap-1">
             <button
               onClick={onSaveEdit}
-              className="bg-blue-400 hover:bg-blue-500 cursor-pointer rounded-3xl p-2.5 ml-2"
+              className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400
+                       cursor-pointer rounded-full p-2.5 text-white transition-colors"
             >
-              <MdEdit className="size-3.5" />
+              <MdEdit className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onCancelEdit}
-              className="bg-gray-400 hover:bg-gray-500 cursor-pointer rounded-3xl p-2.5 "
+              className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500
+                       cursor-pointer rounded-full p-2.5 text-gray-700 dark:text-gray-100 transition-colors"
             >
-              <GiCancel className="size-3.5" />
+              <GiCancel className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       ) : (
-        <div className="flex justify-between items-center w-full">
-          <span>{task.text}</span>
-          <div className="flex gap-0">
+        <div className="flex justify-between items-center w-full gap-2">
+          <span className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line pr-2">
+            {task.text}
+          </span>
+          <div className="flex">
             <button
-              className="bg-red-400 hover:bg-red-500 cursor-pointer rounded-3xl p-2.5"
+              className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-400
+                       cursor-pointer rounded-full p-2.5 text-white transition-colors"
               type="button"
               onClick={() => onDelete(task.id)}
             >
-              <FaTrashCan className="size-3.5" />
+              <FaTrashCan className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onStartEdit(task)}
-              className="bg-orange-400 hover:bg-orange-500 cursor-pointer rounded-3xl p-2.5 ml-1"
+              className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400
+                       cursor-pointer rounded-full p-2.5 ml-2 text-white transition-colors"
             >
-              <MdEdit className="size-3.5" />
+              <MdEdit className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
