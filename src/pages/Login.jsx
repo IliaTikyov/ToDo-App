@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   signInWithEmailAndPassword,
-  sendPasswordResetEmail,
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
@@ -25,7 +24,6 @@ export default function Login() {
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
     setFormError("");
@@ -101,45 +99,38 @@ export default function Login() {
     }
   };
 
-  const onForgotPassword = async () => {
-    setFormError("");
-    setResetSent(false);
-    if (!emailRegex.test(email)) {
-      setErrors((e) => ({
-        ...e,
-        email: "Enter a valid email to reset your password.",
-      }));
-      return;
-    }
-    try {
-      await sendPasswordResetEmail(auth, email);
-      setResetSent(true);
-    } catch (err) {
-      setFormError(mapFirebaseError(err?.code));
-    }
+  const handleForgotPassword = () => {
+    navigate("/updatePassword");
   };
 
   const baseInput =
-    "w-full rounded-md border bg-gray-50 dark:bg-zinc-900 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500";
-  const normalBorder = "border-gray-300 dark:border-zinc-700";
+    "w-full rounded-md border bg-gray-50 dark:bg-gray-700 px-3 py-2 " +
+    "outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 " +
+    "text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500";
+  const normalBorder = "border-gray-300 dark:border-gray-600";
   const errorBorder = "border-red-400 dark:border-red-400";
 
   return (
-    <div className="min-h-screen grid place-items-center bg-[#ecedef] dark:bg-gray-800 dark:text-white">
-      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 shadow p-6">
+    <div className="min-h-screen grid place-items-center bg-gray-50 dark:bg-gray-900 dark:text-white px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg p-6 sm:p-8">
+        {/* Header */}
         <div className="text-center space-y-1 mb-6">
-          <h1 className="text-2xl font-semibold">Welcome back</h1>
+          <h1 className="text-2xl font-extrabold text-gray-800 dark:text-gray-100">
+            Welcome back
+          </h1>
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Log in to continue tracking your tasks
           </p>
         </div>
 
+        {/* Error banner */}
         {formError && (
           <div className="mb-4 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-300 text-red-700 dark:text-red-300 px-3 py-2 text-sm">
             {formError}
           </div>
         )}
 
+        {/* Google sign-in */}
         <button
           type="button"
           onClick={signInWithGoogle}
@@ -147,24 +138,32 @@ export default function Login() {
           className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-medium transition 
             ${
               googleLoading
-                ? "bg-gray-200 dark:bg-zinc-800 cursor-wait"
-                : "bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700"
+                ? "bg-gray-200 dark:bg-gray-700 cursor-wait"
+                : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
             } 
-            border border-gray-300 dark:border-zinc-700`}
+            border border-gray-300 dark:border-gray-600 shadow-sm`}
         >
           <FcGoogle className="text-xl" />
-          {googleLoading ? "Signing in…" : "Continue with Google"}
+          <span className="text-sm text-gray-800 dark:text-gray-100">
+            {googleLoading ? "Signing in…" : "Continue with Google"}
+          </span>
         </button>
 
+        {/* Divider */}
         <div className="my-4 flex items-center gap-3">
-          <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-800" />
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
           <span className="text-xs uppercase text-gray-500">or</span>
-          <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-800" />
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
         </div>
 
+        {/* Email/password form */}
         <form onSubmit={onSubmit} className="space-y-4">
+          {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm mb-1">
+            <label
+              htmlFor="email"
+              className="block text-sm mb-1 text-gray-700 dark:text-gray-200"
+            >
               Email
             </label>
             <input
@@ -179,19 +178,23 @@ export default function Login() {
               placeholder="you@example.com"
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+              <p className="mt-1 text-xs text-red-500">{errors.email}</p>
             )}
           </div>
 
+          {/* Password */}
           <div>
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-sm mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm mb-1 text-gray-700 dark:text-gray-200"
+              >
                 Password
               </label>
               <button
                 type="button"
                 onClick={() => setShowPw((v) => !v)}
-                className="text-xs text-blue-600 hover:underline"
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 {showPw ? "Hide" : "Show"}
               </button>
@@ -208,51 +211,52 @@ export default function Login() {
               placeholder="••••••••"
             />
             {errors.password && (
-              <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+              <p className="mt-1 text-xs text-red-500">{errors.password}</p>
             )}
           </div>
 
+          {/* Remember + forgot */}
           <div className="flex items-center justify-between">
-            <label className="inline-flex items-center gap-2 text-sm select-none">
+            <label className="inline-flex items-center gap-2 text-sm select-none text-gray-700 dark:text-gray-200">
               <input
                 type="checkbox"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                className="accent-blue-600"
+                className="accent-indigo-600"
               />
               <span>Remember me</span>
             </label>
 
             <button
               type="button"
-              onClick={onForgotPassword}
-              className="text-sm text-blue-600 hover:underline"
+              onClick={handleForgotPassword}
+              className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
             >
               Forgot password?
             </button>
           </div>
-          {resetSent && (
-            <p className="text-xs text-green-600">
-              Password reset email sent. Check your inbox.
-            </p>
-          )}
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={!canSubmit}
-            className={`w-full rounded-xl px-4 py-2 font-semibold text-white transition 
+            className={`w-full rounded-full px-4 py-2 font-semibold text-white text-sm sm:text-base transition 
               ${
                 canSubmit
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-blue-400 cursor-not-allowed"
+                  ? "bg-indigo-600 hover:bg-indigo-700 shadow"
+                  : "bg-indigo-300 cursor-not-allowed"
               }`}
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>
 
-          <p className="text-sm text-center text-gray-600 dark:text-gray-300">
+          {/* Register link */}
+          <p className="text-sm text-center text-gray-600 dark:text-gray-300 mt-2">
             Don’t have an account?
-            <Link to="/register" className="ml-1 text-blue-600 hover:underline">
+            <Link
+              to="/register"
+              className="ml-1 text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
               Create one
             </Link>
           </p>
