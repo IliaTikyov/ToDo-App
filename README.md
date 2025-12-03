@@ -1,12 +1,134 @@
-# React + Vite
+# To-Do App - With React + Firebase + Tailwind CSS 📝
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a modern To-Do application built with a modern stack of technologies (React for the frontend, Firebase for authentication, authorization and real-time data persistence, and Tailwind CSS for polished UI).
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Authentication
 
-## Expanding the ESLint configuration
+- Sign-up with email and password
+- Google login
+- Password reset
+- Delete account (with re-auth handling)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Tasks
+
+- CRUD operations
+- Drag and Drop reordering (via @dnd-kit)
+- Auto-saving structure
+- Responsive layout
+
+UI/UX
+
+- Theme toggle (light/dark)
+- Fully responsive design
+- Animated drawer menu
+- Tailwind global theme color
+- Modern friendly layout
+
+Firebase
+
+- Firebase auth
+- Firebase data storing
+- Google OAuth provider
+- Secure user metadata handling
+
+## Tech Stack
+
+| Technology        |            Purpose            |
+| :---------------- | :---------------------------: |
+| React             |           Framework           |
+| TailwindCSS       |      Styling and theming      |
+| Firebase Auth     |      User login/register      |
+| Firebase Database |         Storing tasks         |
+| Vite              |          Build tool           |
+| React Router      |            Routing            |
+| @dnd-kit          | Drag and drop task & ordering |
+
+## Screenshots
+
+Login Page
+
+![Login Page](/public//loginPage.png)
+
+Register Page
+
+![Register Page](/public/registerPage.png)
+
+Reset Password Page
+
+![Reset Password Page](/public/resetPasswordPage.png)
+
+Dashboard Page
+
+![Dashboard Page](/public//dashboardPage.png)
+
+Account Page
+
+![Account Info](/public//accountPage.png)
+
+## Installation
+
+1. Clone the repository
+
+```bash
+  git clone https://github.com/IliaTikyov/ToDo-App.git
+  cd ToDo\ App/
+```
+
+2. Install dependencies
+
+```bash
+  npm install
+```
+
+3. Set up Environment Variables
+
+Create a .env file in the project root with your Firebase credentials:
+
+```bash
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-auth-domain
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-storage-bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+VITE_FIREBASE_APP_ID=your-app-id
+VITE_FIREBASE_MEASUREMENT_ID=your-measurement-id
+
+```
+
+4. Run the development server
+
+```bash
+  npm run dev
+```
+
+Open in browser: http://localhost:5173/
+
+## Folder Structure
+
+├── src
+│ ├── App.jsx
+│ ├── assets
+│ │ └── react.svg
+│ ├── components
+│ │ ├── AddingTasks.jsx
+│ │ ├── Header.jsx
+│ │ ├── Menu.jsx
+│ │ ├── TaskCard.jsx
+│ │ └── ThemeToggle.jsx
+│ ├── index.css
+│ ├── main.jsx
+│ ├── pages
+│ │ ├── Account.jsx
+│ │ ├── DashBoard.jsx
+│ │ ├── Login.jsx
+│ │ ├── Register.jsx
+│ │ └── UpdatePassword.jsx
+│ └── utils
+│ └── ProtectedRoute.jsx
+└── vite.config.js
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/) License © Ilia Tikyov
