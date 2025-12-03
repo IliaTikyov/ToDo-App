@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { auth } from "../../config/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
@@ -8,6 +8,7 @@ const Register = () => {
 
   const navigate = useNavigate();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -31,6 +32,7 @@ const Register = () => {
 
   const validate = () => {
     const next = {};
+    if (!name.trim()) next.name = "Please enter your name.";
     if (!emailRegex.test(email)) next.email = "Please enter a valid email.";
     if (password.length < 8) next.password = "Use at least 8 characters.";
     if (!/[A-Z]/.test(password))
@@ -47,9 +49,10 @@ const Register = () => {
   useEffect(() => {
     setErrors(validate());
     setFormError("");
-  }, [email, password, confirm, acceptedTerms]);
+  }, [name, email, password, confirm, acceptedTerms]);
 
   const canSubmit =
+    name &&
     email &&
     password &&
     confirm &&
@@ -82,7 +85,14 @@ const Register = () => {
 
     try {
       setLoading(true);
-      await createUserWithEmailAndPassword(auth, email, password);
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+      if (cred.user) {
+        await updateProfile(cred.user, {
+          displayName: name.trim(),
+        });
+      }
+
       navigate("/");
     } catch (err) {
       setFormError(mapFirebaseError(err?.code));
@@ -92,15 +102,18 @@ const Register = () => {
   };
 
   const baseInput =
-    "w-full rounded-md border bg-gray-50 dark:bg-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500";
+    "w-full rounded-md border bg-gray-50 dark:bg-gray-700 px-3 py-2 " +
+    "outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 " +
+    "text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500";
   const errorBorder = "border-red-400 dark:border-red-400";
-  const normalBorder = "border-gray-300 dark:border-zinc-700";
+  const normalBorder = "border-gray-300 dark:border-gray-600";
 
   return (
-    <div className="min-h-screen grid place-items-center bg-[#ecedef] dark:bg-gray-800 dark:text-white">
-      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 shadow p-6">
-        <div className="flex flex-col justify-center items-center space-y-0.5 mb-6">
-          <h1 className="text-2xl font-semibold dark:text-white">
+    <div className="min-h-screen grid place-items-center bg-gray-50 dark:bg-gray-900 dark:text-white px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg p-6 sm:p-8">
+        {/* Header */}
+        <div className="flex flex-col justify-center items-center space-y-1 mb-6">
+          <h1 className="text-2xl font-extrabold text-gray-800 dark:text-gray-100">
             Create Your Account
           </h1>
           <h2 className="text-sm text-gray-600 dark:text-gray-300">
@@ -108,6 +121,7 @@ const Register = () => {
           </h2>
         </div>
 
+        {/* Error banner */}
         {formError && (
           <div className="mb-4 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-300 text-red-700 dark:text-red-300 px-3 py-2 text-sm">
             {formError}
@@ -115,8 +129,36 @@ const Register = () => {
         )}
 
         <form onSubmit={handleUserRegister} className="space-y-4">
+          {/* Name */}
           <div>
-            <label htmlFor="email" className="block text-sm mb-1">
+            <label
+              htmlFor="name"
+              className="block text-sm mb-1 text-gray-700 dark:text-gray-200"
+            >
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              autoComplete="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={`${baseInput} ${
+                errors.name ? errorBorder : normalBorder
+              }`}
+              placeholder="Your name"
+            />
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm mb-1 text-gray-700 dark:text-gray-200"
+            >
               Email
             </label>
             <input
@@ -135,8 +177,12 @@ const Register = () => {
             )}
           </div>
 
+          {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-sm mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm mb-1 text-gray-700 dark:text-gray-200"
+            >
               Password
             </label>
             <div className="relative">
@@ -154,7 +200,7 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => setShowPw((v) => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-600 dark:text-gray-300"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                 aria-label={showPw ? "Hide password" : "Show password"}
               >
                 {showPw ? "Hide" : "Show"}
@@ -164,24 +210,29 @@ const Register = () => {
               <p className="mt-1 text-sm text-red-500">{errors.password}</p>
             )}
 
-            <div className="mt-2 h-1 w-full bg-gray-200 dark:bg-zinc-800 rounded">
+            {/* Password strength bar */}
+            <div className="mt-2 h-1 w-full bg-gray-200 dark:bg-gray-700 rounded">
               <div
                 className="h-1 rounded transition-all"
                 style={{
                   width: `${(pwStrength / 5) * 100}%`,
                   background:
                     pwStrength < 2
-                      ? "#ef4444"
+                      ? "#ef4444" // red-500
                       : pwStrength < 4
-                      ? "#f59e0b"
-                      : "#10b981",
+                      ? "#f59e0b" // amber-500
+                      : "#10b981", // emerald-500
                 }}
               />
             </div>
           </div>
 
+          {/* Confirm password */}
           <div>
-            <label htmlFor="confirm" className="block text-sm mb-1">
+            <label
+              htmlFor="confirm"
+              className="block text-sm mb-1 text-gray-700 dark:text-gray-200"
+            >
               Confirm Password
             </label>
             <div className="relative">
@@ -199,7 +250,7 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => setShowPw2((v) => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-600 dark:text-gray-300"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                 aria-label={
                   showPw2 ? "Hide confirm password" : "Show confirm password"
                 }
@@ -212,19 +263,20 @@ const Register = () => {
             )}
           </div>
 
+          {/* Terms */}
           <div>
-            <label className="inline-flex items-center gap-2 text-sm select-none">
+            <label className="inline-flex items-center gap-2 text-sm select-none text-gray-700 dark:text-gray-200">
               <input
                 type="checkbox"
                 checked={acceptedTerms}
                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="accent-blue-600"
+                className="accent-indigo-600"
               />
               <span>
                 I agree to the
                 <Link
                   to="/terms"
-                  className="text-blue-600 hover:underline ml-1"
+                  className="text-indigo-600 dark:text-indigo-400 hover:underline ml-1"
                 >
                   Terms and Conditions
                 </Link>
@@ -235,22 +287,27 @@ const Register = () => {
             )}
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={!canSubmit}
-            className={`w-full rounded-full px-4 py-2 font-semibold text-white transition 
+            className={`w-full rounded-full px-4 py-2 font-semibold text-white text-sm sm:text-base transition 
               ${
                 canSubmit
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-blue-400 cursor-not-allowed"
+                  ? "bg-indigo-600 hover:bg-indigo-700 shadow"
+                  : "bg-indigo-300 cursor-not-allowed"
               }`}
           >
             {loading ? "Creating account..." : "Register"}
           </button>
 
-          <p className="text-sm text-center text-gray-600 dark:text-gray-300">
+          {/* Login link */}
+          <p className="text-sm text-center text-gray-600 dark:text-gray-300 mt-2">
             Have an account?
-            <Link to="/login" className="ml-1 text-blue-600 hover:underline">
+            <Link
+              to="/login"
+              className="ml-1 text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
               Sign in
             </Link>
           </p>
